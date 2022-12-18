@@ -1,0 +1,11 @@
+import express, { Request, Response } from 'express';
+import { userCheck, adminCheck } from '../middelwares/authentication';
+import { index, show, signUp, remove, update, logIn } from '../services/users';
+export { usersRoutes };
+const usersRoutes = express.Router();
+usersRoutes.post('/logIn', logIn);
+usersRoutes.post('/', signUp);
+usersRoutes.get('/', adminCheck, index);
+usersRoutes.get('/:id', userCheck, show);
+usersRoutes.delete('/:id', userCheck, remove);
+usersRoutes.patch('/:id', userCheck, update);

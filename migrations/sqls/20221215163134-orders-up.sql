@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS orders (id serial primary key,status VARCHAR(10),user_id int NOT NULL ,date_of_creation date  NOT NULL,order_address text NOT NULL,delivery_cost float4 NOT NULL,FOREIGN KEY(user_id) REFERENCES users(id));
