@@ -28,7 +28,7 @@ function show(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const product = yield product_1.ProductModel.select(parseInt(req.params.id));
-            if (!product)
+            if (!(product === null || product === void 0 ? void 0 : product.id))
                 return res.status(404).json({ message: "product does n't exist" });
             return res.status(200).json({ message: 'show', product });
         }
@@ -42,7 +42,11 @@ function create(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             let productData = req.body;
-            if (!(productData.amount && productData.name && productData.price))
+            if (!(productData.amount &&
+                productData.name &&
+                productData.price &&
+                productData.img_url &&
+                productData.category))
                 return res.status(406).send({
                     message: 'please complete product data',
                 });
@@ -72,7 +76,7 @@ function remove(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const Product = yield product_1.ProductModel.select(parseInt(req.params.id));
-            if (!Product)
+            if (!(Product === null || Product === void 0 ? void 0 : Product.id))
                 return res.status(404).json({ message: 'product does not exist' });
             yield product_1.ProductModel.remove(Number(req.params.id));
             return res.status(200).json({
@@ -89,7 +93,7 @@ function update(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const Product = yield product_1.ProductModel.select(parseInt(req.params.id));
-            if (!Product)
+            if (!(Product === null || Product === void 0 ? void 0 : Product.id))
                 return res.status(404).json({ message: 'product does not exist' });
             let productData = req.body;
             productData = (0, utilites_1.formateProduct)(productData);

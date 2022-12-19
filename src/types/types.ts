@@ -6,6 +6,7 @@ export {
     ProductDTO,
     validationResponse,
     orders_product,
+    UserDTO,
 };
 
 interface User {
@@ -19,6 +20,17 @@ interface User {
     user_type: string;
     phone: string;
 }
+interface UserDTO {
+    user_type?: string;
+    date_of_creation?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    user_name?: string;
+    user_password?: string;
+    phone?: string;
+    new_password?: string;
+}
 interface Product {
     id: number;
     name: string;
@@ -27,6 +39,7 @@ interface Product {
     img_url: string;
     rating: number;
     date_of_change: string;
+    category: string;
 }
 interface Order {
     id: number;
@@ -40,11 +53,14 @@ interface Order {
     num_of_orders: Number;
     products: orders_product[];
 }
+
 interface orders_product {
     id: number;
     order_id: number;
     product_id: number;
     quantity: number;
+    product_name:string;
+    product_price:number;
 }
 interface ProductDTO {
     img_url: string;
@@ -52,6 +68,7 @@ interface ProductDTO {
     price: number;
     amount: number;
     date_of_change: string;
+    category: string;
 }
 interface OrderDTO {
     user_id: number;

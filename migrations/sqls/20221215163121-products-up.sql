@@ -1,1 +1,1 @@
-CREATE TABLE IF NOT EXISTS  products (id serial primary key,name VARCHAR(100)  NOT NULL,date_of_change date  NOT NULL,price float4 NOT NULL,rating float4 ,img_url text NOT NULL,amount int  NOT NULL);
+CREATE TABLE IF NOT EXISTS  products (id serial primary key,name VARCHAR(100)  NOT NULL,date_of_change date  NOT NULL,price float4 NOT NULL DEFAULT 0,rating float4 DEFAULT 0,img_url text NOT NULL,amount int  NOT NULL DEFAULT 0,category VARCHAR(20) NOT NULL);

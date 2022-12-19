@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMonthPeriod = exports.Verfy = exports.formateOrder = exports.generateProductUpdataSQL = exports.formateProduct = exports.generateUpdataSQL = exports.checkUserExistance = exports.passwordValidation = exports.getJWT = exports.formateNewUser = exports.userNameConstrainsCheck = exports.passwordConstrainsCheck = void 0;
+exports.hashPassword = exports.getMonthPeriod = exports.Verfy = exports.formateOrder = exports.generateProductUpdataSQL = exports.formateProduct = exports.generateUpdataSQL = exports.passwordValidation = exports.getJWT = exports.formateNewUser = exports.userNameConstrainsCheck = exports.passwordConstrainsCheck = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_1 = require("../models/user");
 require("dotenv/config");
@@ -31,73 +31,81 @@ function passwordConstrainsCheck(password) {
 exports.passwordConstrainsCheck = passwordConstrainsCheck;
 function userNameConstrainsCheck(user) {
     return __awaiter(this, void 0, void 0, function* () {
-        const Usr = yield user_1.UserModel.selectUser(user.user_name);
-        if (Usr === null || Usr === void 0 ? void 0 : Usr.user_password)
+        try {
+            const Usr = yield user_1.UserModel.selectUser(user.user_name);
+            if (Usr === null || Usr === void 0 ? void 0 : Usr.user_password)
+                return {
+                    valid: false,
+                    msg: 'username already in use',
+                };
             return {
-                valid: false,
-                msg: 'username already in use',
+                valid: true,
+                msg: 'ok',
             };
-        return {
-            valid: true,
-            msg: 'ok',
-        };
+        }
+        catch (err) {
+            throw err;
+        }
     });
 }
 exports.userNameConstrainsCheck = userNameConstrainsCheck;
 function formateNewUser(userData) {
     return __awaiter(this, void 0, void 0, function* () {
-        const today = new Date();
-        userData.date_of_creation =
-            today.getFullYear() +
-                '-' +
-                (today.getMonth() + 1) +
-                '-' +
-                today.getDate();
-        const salt = parseInt(process.env.STORE_SALT);
-        const piper = process.env.STORE_PIPER;
-        userData.user_password = yield bcrypt_1.default.hash(userData.user_password + piper, salt);
-        return userData;
+        try {
+            const today = new Date();
+            userData.date_of_creation =
+                today.getMonth() +
+                    1 +
+                    '-' +
+                    today.getDate() +
+                    '-' +
+                    today.getFullYear();
+            userData.user_password = yield hashPassword(userData.user_password);
+            return userData;
+        }
+        catch (err) {
+            throw err;
+        }
     });
 }
 exports.formateNewUser = formateNewUser;
 function getJWT(id) {
-    const jwtSecretToken = process.env.STORE_JWT_TOKEN;
-    return jsonwebtoken_1.default.sign({ id }, jwtSecretToken);
+    return jsonwebtoken_1.default.sign({ id }, process.env.STORE_JWT_TOKEN);
 }
 exports.getJWT = getJWT;
-function passwordValidation(password, dbpassword) {
+function passwordValidation(password, hashedPassword) {
     return __awaiter(this, void 0, void 0, function* () {
-        const piper = process.env.STORE_PIPER;
-        const result = yield bcrypt_1.default.compare(password + piper, dbpassword);
-        return result;
+        try {
+            const piper = process.env.STORE_PIPER;
+            const result = yield bcrypt_1.default.compare(password + piper, hashedPassword);
+            return result;
+        }
+        catch (err) {
+            throw err;
+        }
     });
 }
 exports.passwordValidation = passwordValidation;
-function checkUserExistance(id, user_password) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const user = yield user_1.UserModel.select(id);
-        if (!(user === null || user === void 0 ? void 0 : user.user_password))
-            return { valid: false, msg: 'invalid user name' };
-        const result = yield passwordValidation(user_password, user.user_password);
-        if (result) {
-            return {
-                valid: true,
-                msg: 'done',
-            };
-        }
-        return { valid: false, msg: 'wrong password' };
-    });
-}
-exports.checkUserExistance = checkUserExistance;
-function generateUpdataSQL(user, id) {
+function generateUpdataSQL(user) {
     let sql = 'UPDATE users SET ';
     let n = 1;
     const coloums = [];
     const theArray = [];
-    const entries = Object.entries(user);
-    for (let entry of entries) {
-        coloums.push((entry[0] += '=$' + ++n));
-        theArray.push(entry[1]);
+    const keys = [
+        'first_name',
+        'last_name',
+        'date_of_creation',
+        'email',
+        'user_name',
+        'user_password',
+        'user_type',
+        'phone',
+    ];
+    for (let key of keys) {
+        if (user.hasOwnProperty(key)) {
+            coloums.push(key + '=$' + ++n);
+            theArray.push(user[key]);
+        }
     }
     sql += coloums.join(',') + ' WHERE id=$1 RETURNING *';
     return [sql, theArray];
@@ -108,11 +116,12 @@ function formateProduct(productData) {
     productData.amount = Number(productData.amount);
     const today = new Date();
     productData.date_of_change =
-        today.getFullYear() +
+        today.getMonth() +
+            1 +
             '-' +
-            (today.getMonth() + 1) +
+            today.getDate() +
             '-' +
-            today.getDate();
+            today.getFullYear();
     return productData;
 }
 exports.formateProduct = formateProduct;
@@ -121,54 +130,83 @@ function generateProductUpdataSQL(product) {
     let n = 1;
     const coloums = [];
     const theArray = [];
-    const entries = Object.entries(product);
-    for (let entry of entries) {
-        coloums.push((entry[0] += '=$' + ++n));
-        theArray.push(entry[1]);
+    const keys = [
+        'name',
+        'price',
+        'amount',
+        'img_url',
+        'rating',
+        'date_of_change',
+        'category',
+    ];
+    for (let key of keys) {
+        if (product.hasOwnProperty(key)) {
+            coloums.push(key + '=$' + ++n);
+            theArray.push(product[key]);
+        }
     }
     sql += coloums.join(',') + ' WHERE id=$1 RETURNING *';
     return { sql, theArray };
 }
 exports.generateProductUpdataSQL = generateProductUpdataSQL;
-function formateOrder(orderData, authorization) {
+function formateOrder(orderData) {
+    const today = new Date();
+    orderData.date =
+        today.getMonth() +
+            1 +
+            '-' +
+            today.getDate() +
+            '-' +
+            today.getFullYear();
+    orderData.amount = parseInt('' + orderData.amount);
+    orderData.product_id = parseInt('' + orderData.product_id);
+    return orderData;
+}
+exports.formateOrder = formateOrder;
+function Verfy(authorization) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const JWT = (_a = authorization === null || authorization === void 0 ? void 0 : authorization.split(' ')[1]) !== null && _a !== void 0 ? _a : '';
-            const today = new Date();
-            orderData.date =
-                today.getFullYear() +
-                    '-' +
-                    (today.getMonth() + 1) +
-                    '-' +
-                    today.getDate();
-            orderData.user_id = (_b = jsonwebtoken_1.default.verify(JWT, process.env.STORE_JWT_TOKEN)) === null || _b === void 0 ? void 0 : _b.id;
+            const user = user_1.UserModel.select((_b = jsonwebtoken_1.default.verify(JWT, process.env.STORE_JWT_TOKEN)) === null || _b === void 0 ? void 0 : _b.id);
+            return user;
         }
-        catch (error) { }
-        return orderData;
+        catch (err) {
+            throw err;
+        }
     });
-}
-exports.formateOrder = formateOrder;
-function Verfy(authorization) {
-    var _a;
-    const JWT = (_a = authorization === null || authorization === void 0 ? void 0 : authorization.split(' ')[1]) !== null && _a !== void 0 ? _a : '';
-    return jsonwebtoken_1.default.verify(JWT, process.env.STORE_JWT_TOKEN);
 }
 exports.Verfy = Verfy;
 function getMonthPeriod() {
     const today = new Date();
-    const todayDate = today.getFullYear() +
+    const todayDate = today.getMonth() +
+        1 +
         '-' +
-        (today.getMonth() + 1) +
+        today.getDate() +
         '-' +
-        today.getDate();
+        today.getFullYear();
     const lastM = new Date();
     lastM.setMonth(lastM.getMonth() - 1);
-    const lastMD = lastM.getFullYear() +
+    const lastMD = lastM.getMonth() +
+        1 +
         '-' +
-        (lastM.getMonth() + 1) +
+        lastM.getDate() +
         '-' +
-        lastM.getDate();
-    return todayDate + ' AND ' + lastMD + ';';
+        lastM.getFullYear();
+    return "'" + lastMD + "'" + ' AND ' + "'" + todayDate + "'";
 }
 exports.getMonthPeriod = getMonthPeriod;
+function hashPassword(pass) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const salt = parseInt(process.env.STORE_SALT);
+            const piper = process.env.STORE_PIPER;
+            pass = yield bcrypt_1.default.hash(pass + piper, salt);
+            return pass;
+        }
+        catch (err) {
+            throw err;
+        }
+    });
+}
+exports.hashPassword = hashPassword;

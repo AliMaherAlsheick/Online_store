@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models/user';
-import { User } from '../types/types';
+import { User, UserDTO } from '../types/types';
 import {
     formateNewUser,
     getJWT,
     passwordConstrainsCheck,
     userNameConstrainsCheck,
     passwordValidation,
-    checkUserExistance,
+    Verfy,
+    hashPassword,
 } from '../utilites/utilites';
 export { index, show, signUp, remove, update, logIn };
 
@@ -21,19 +22,27 @@ async function index(req: Request, res: Response) {
 }
 async function show(req: Request, res: Response): Promise<Response> {
     try {
+        const caller = await Verfy(req.headers.authorization);
+        console.log(caller);
         const user: User = await UserModel.select(parseInt(req.params.id));
-
-        if (!user)
-            return res.status(404).json({ message: "user does n't exist" });
         user.user_password = '********';
-        return res.status(200).json({ message: 'show', user });
+        let result: { result: unknown; msg: string };
+        if (!user?.id)
+            return res.status(404).json({ message: "user does n't exist" });
+        if (caller?.user_type === 'admin' || user?.id === caller?.id) {
+            result = { msg: 'ok', result: user };
+            return res.status(200).json({ message: 'show', user });
+        } else
+            return res.status(400).json({
+                message: 'not allowed',
+            });
     } catch (error) {
         return res.status(500).send({ message: 'error encountered', error });
     }
 }
 async function signUp(req: Request, res: Response): Promise<Response> {
     try {
-        let userData: User = req.body;
+        let userData: UserDTO = req.body;
 
         if (
             !(
@@ -85,33 +94,93 @@ async function signUp(req: Request, res: Response): Promise<Response> {
 }
 async function remove(req: Request, res: Response) {
     try {
-        const result = await checkUserExistance(
-            parseInt(req.params.id),
-            req.body.user_password
-        );
-        if (!result.valid) return res.status(404).json({ message: result.msg });
-        const user = await UserModel.remove(parseInt(req.params.id));
-        return res.status(200).json({
-            msg: 'deleted',
-        });
+        let user: UserDTO = req.body;
+        let caller: User = await Verfy(req.headers.authorization);
+        if (caller?.user_type === 'admin') {
+            deleting(user, await UserModel.select(parseInt(req.params.id)));
+        } else {
+            if (
+                caller?.id === parseInt(req.params.id) &&
+                (await passwordValidation(
+                    user.user_password as string,
+                    caller.user_password
+                ))
+            ) {
+                deleting(user, caller);
+            } else return res.status(404).json({ message: 'not allowed' });
+        }
+        async function deleting(userData: UserDTO, user: User) {
+            if (user?.id) {
+                await UserModel.remove(parseInt(req.params.id));
+
+                return res.status(200).json({
+                    msg: 'deleted',
+                });
+            }
+            return res.status(404).json({ message: 'user does not exist' });
+        }
     } catch (error) {
         return res.status(500).send({ message: 'error encountered', error });
     }
 }
 async function update(req: Request, res: Response) {
     try {
-        const result = await checkUserExistance(
-            parseInt(req.params.id),
-            req.body.user_password
-        );
-        if (!result.valid) return res.status(404).json({ message: result.msg });
+        let user: UserDTO = req.body;
+        let caller: User = await Verfy(req.headers.authorization);
+        if (caller?.user_type === 'admin') {
+            updating(user, await UserModel.select(parseInt(req.params.id)));
+        } else {
+            if (
+                caller?.id === parseInt(req.params.id) &&
+                (await passwordValidation(
+                    user.user_password as string,
+                    caller.user_password
+                ))
+            ) {
+                updating(user, caller);
+            } else return res.status(404).json({ message: 'not allowed' });
+        }
+        async function updating(userData: UserDTO, user: User) {
+            if (user?.id) {
+                if (userData.hasOwnProperty('new_password')) {
+                    const validate = passwordConstrainsCheck(
+                        userData.new_password as string
+                    );
+                    if (!validate.valid) {
+                        return res.status(404).json({ message: validate.msg });
+                    } else {
+                        userData.user_password = await hashPassword(
+                            userData.new_password as string
+                        );
+                    }
+                    delete userData.new_password;
+                } else {
+                    delete userData.user_password;
+                }
 
-        const user = await UserModel.update(req.body, parseInt(req.params.id));
-        user.user_password = '********';
-        return res.status(200).json({
-            msg: 'updated',
-            user,
-        });
+                if (userData?.user_name) {
+                    if (userData?.user_name !== user?.user_name) {
+                        const validate = await userNameConstrainsCheck(
+                            userData
+                        );
+                        if (!validate.valid)
+                            return res
+                                .status(404)
+                                .json({ message: validate.msg });
+                    } else delete userData.user_name;
+                }
+                user = await UserModel.update(
+                    userData,
+                    parseInt(req.params.id)
+                );
+                userData.user_password = '********';
+                return res.status(200).json({
+                    msg: 'updated',
+                    user,
+                });
+            }
+            return res.status(404).json({ message: 'user does not exist' });
+        }
     } catch (error) {
         return res.status(500).send({ message: 'error encountered', error });
     }
@@ -127,7 +196,7 @@ async function logIn(req: Request, res: Response): Promise<Response> {
             user?.user_password
         );
         if (result) {
-            const jwt: string = getJWT(parseInt(req.params.id));
+            const jwt: string = getJWT(user?.id);
             return res.status(200).json({
                 msg: 'done',
                 id: user.id,

@@ -11,26 +11,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminCheck = exports.userCheck = void 0;
 require("dotenv/config");
-const user_1 = require("../models/user");
 const utilites_1 = require("../utilites/utilites");
 function userCheck(req, res, NextFunction) {
-    try {
-        (0, utilites_1.Verfy)(req.headers.authorization);
-        NextFunction();
-    }
-    catch (error) {
-        res.status(400).json({
-            message: 'invalid token please signIn or signUp',
-            error,
-        });
-    }
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield (0, utilites_1.Verfy)(req.headers.authorization);
+            NextFunction();
+        }
+        catch (error) {
+            res.status(400).json({
+                message: 'invalid token please signIn or signUp',
+                error,
+            });
+        }
+    });
 }
 exports.userCheck = userCheck;
 function adminCheck(req, res, NextFunction) {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const user = yield user_1.UserModel.select((_a = (0, utilites_1.Verfy)(req.headers.authorization)) === null || _a === void 0 ? void 0 : _a.id);
+            const user = yield (0, utilites_1.Verfy)(req.headers.authorization);
             if (user.user_type === 'admin')
                 NextFunction();
             else

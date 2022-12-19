@@ -5,13 +5,13 @@ import { UserModel } from '../models/user';
 import { User } from '../types/types';
 import { Verfy } from '../utilites/utilites';
 export { userCheck };
-function userCheck(
+async function userCheck(
     req: Request,
     res: Response,
     NextFunction: NextFunction
-): void {
+): Promise<void> {
     try {
-        Verfy(req.headers.authorization);
+        await Verfy(req.headers.authorization);
         NextFunction();
     } catch (error) {
         res.status(400).json({
@@ -26,13 +26,7 @@ export async function adminCheck(
     NextFunction: NextFunction
 ): Promise<void | Response> {
     try {
-        const user = await UserModel.select(
-            (
-                Verfy(req.headers.authorization) as {
-                    id: number;
-                }
-            )?.id
-        );
+        const user: User = await Verfy(req.headers.authorization);
         if (user.user_type === 'admin') NextFunction();
         else
             return res.status(400).json({

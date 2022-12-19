@@ -1,4 +1,10 @@
-import { OrderDTO, ProductDTO, User, validationResponse } from '../types/types';
+import {
+    OrderDTO,
+    ProductDTO,
+    User,
+    UserDTO,
+    validationResponse,
+} from '../types/types';
 import bcrypt from 'bcrypt';
 import { UserModel } from '../models/user';
 import 'dotenv/config';
@@ -15,76 +21,82 @@ export function passwordConstrainsCheck(password: string): validationResponse {
     };
 }
 export async function userNameConstrainsCheck(
-    user: User
+    user: UserDTO
 ): Promise<validationResponse> {
-    const Usr = await UserModel.selectUser(user.user_name);
+    try {
+        const Usr = await UserModel.selectUser(user.user_name as string);
 
-    if (Usr?.user_password)
+        if (Usr?.user_password)
+            return {
+                valid: false,
+                msg: 'username already in use',
+            };
         return {
-            valid: false,
-            msg: 'username already in use',
+            valid: true,
+            msg: 'ok',
         };
-    return {
-        valid: true,
-        msg: 'ok',
-    };
+    } catch (err) {
+        throw err;
+    }
 }
 
-export async function formateNewUser(userData: User): Promise<User> {
-    const today: Date = new Date();
-    userData.date_of_creation =
-        today.getFullYear() +
-        '-' +
-        (today.getMonth() + 1) +
-        '-' +
-        today.getDate();
-
-    const salt: number = parseInt(process.env.STORE_SALT as string);
-    const piper: string = process.env.STORE_PIPER as string;
-    userData.user_password = await bcrypt.hash(
-        userData.user_password + piper,
-        salt
-    );
-    return userData;
+export async function formateNewUser(userData: UserDTO): Promise<UserDTO> {
+    try {
+        const today: Date = new Date();
+        userData.date_of_creation =
+            today.getMonth() +
+            1 +
+            '-' +
+            today.getDate() +
+            '-' +
+            today.getFullYear();
+        userData.user_password = await hashPassword(
+            userData.user_password as string
+        );
+        return userData;
+    } catch (err) {
+        throw err;
+    }
 }
 export function getJWT(id: number): string {
-    const jwtSecretToken = process.env.STORE_JWT_TOKEN as string;
-    return jwt.sign({ id }, jwtSecretToken);
+    return jwt.sign({ id }, process.env.STORE_JWT_TOKEN as string);
 }
 export async function passwordValidation(
     password: string,
-    dbpassword: string
+    hashedPassword: string
 ): Promise<boolean> {
-    const piper: string = process.env.STORE_PIPER as string;
-    const result = await bcrypt.compare(password + piper, dbpassword);
+    try {
+        const piper: string = process.env.STORE_PIPER as string;
+        const result = await bcrypt.compare(password + piper, hashedPassword);
 
-    return result;
-}
-export async function checkUserExistance(
-    id: number,
-    user_password: string
-): Promise<validationResponse> {
-    const user = await UserModel.select(id);
-    if (!user?.user_password) return { valid: false, msg: 'invalid user name' };
-
-    const result = await passwordValidation(user_password, user.user_password);
-    if (result) {
-        return {
-            valid: true,
-            msg: 'done',
-        };
+        return result;
+    } catch (err) {
+        throw err;
     }
-    return { valid: false, msg: 'wrong password' };
 }
-export function generateUpdataSQL(user: User, id: number): [string, string[]] {
+
+export function generateUpdataSQL(
+    user: UserDTO
+): [string, (string | undefined)[]] {
     let sql: string = 'UPDATE users SET ';
     let n: number = 1;
     const coloums: string[] = [];
-    const theArray: string[] = [];
-    const entries = Object.entries(user);
-    for (let entry of entries) {
-        coloums.push((entry[0] += '=$' + ++n));
-        theArray.push(entry[1]);
+    const theArray: (string | undefined)[] = [];
+    const keys = [
+        'first_name',
+        'last_name',
+        'date_of_creation',
+        'email',
+        'user_name',
+        'user_password',
+        'user_type',
+        'phone',
+    ] as unknown as (keyof UserDTO)[];
+    for (let key of keys) {
+        if (user.hasOwnProperty(key)) {
+            coloums.push(key + '=$' + ++n);
+            theArray.push(user[key]);
+        }
     }
     sql += coloums.join(',') + ' WHERE id=$1 RETURNING *';
     return [sql, theArray];
@@ -94,11 +106,12 @@ export function formateProduct(productData: ProductDTO): ProductDTO {
     productData.amount = Number(productData.amount);
     const today: Date = new Date();
     productData.date_of_change =
-        today.getFullYear() +
+        today.getMonth() +
+        1 +
         '-' +
-        (today.getMonth() + 1) +
+        today.getDate() +
         '-' +
-        today.getDate();
+        today.getFullYear();
     return productData;
 }
 export function generateProductUpdataSQL(product: ProductDTO) {
@@ -106,56 +119,80 @@ export function generateProductUpdataSQL(product: ProductDTO) {
     let n: number = 1;
     const coloums: string[] = [];
     const theArray = [];
-    const entries = Object.entries(product);
-    for (let entry of entries) {
-        coloums.push((entry[0] += '=$' + ++n));
-        theArray.push(entry[1]);
+    const keys = [
+        'name',
+        'price',
+        'amount',
+        'img_url',
+        'rating',
+        'date_of_change',
+        'category',
+    ] as unknown as (keyof ProductDTO)[];
+    for (let key of keys) {
+        if (product.hasOwnProperty(key)) {
+            coloums.push(key + '=$' + ++n);
+            theArray.push(product[key]);
+        }
     }
     sql += coloums.join(',') + ' WHERE id=$1 RETURNING *';
     return { sql, theArray };
 }
-export async function formateOrder(
-    orderData: OrderDTO,
-    authorization: undefined | string
-) {
+export function formateOrder(orderData: OrderDTO) {
+    const today: Date = new Date();
+    orderData.date =
+        today.getMonth() +
+        1 +
+        '-' +
+        today.getDate() +
+        '-' +
+        today.getFullYear();
+    orderData.amount = parseInt('' + orderData.amount);
+    orderData.product_id = parseInt('' + orderData.product_id);
+    return orderData;
+}
+export async function Verfy(authorization: string | undefined): Promise<User> {
     try {
         const JWT = authorization?.split(' ')[1] ?? '';
 
-        const today: Date = new Date();
-        orderData.date =
-            today.getFullYear() +
-            '-' +
-            (today.getMonth() + 1) +
-            '-' +
-            today.getDate();
-
-        orderData.user_id = (
-            jwt.verify(JWT, process.env.STORE_JWT_TOKEN as string) as {
-                id: number;
-            }
-        )?.id;
-    } catch (error) {}
-    return orderData;
-}
-export function Verfy(authorization: string | undefined) {
-    const JWT = authorization?.split(' ')[1] ?? '';
-    return jwt.verify(JWT, process.env.STORE_JWT_TOKEN as string);
+        const user = UserModel.select(
+            (
+                jwt.verify(JWT, process.env.STORE_JWT_TOKEN as string) as {
+                    id: number;
+                }
+            )?.id
+        );
+        return user;
+    } catch (err) {
+        throw err;
+    }
 }
 export function getMonthPeriod(): string {
     const today: Date = new Date();
     const todayDate =
-        today.getFullYear() +
+        today.getMonth() +
+        1 +
         '-' +
-        (today.getMonth() + 1) +
+        today.getDate() +
         '-' +
-        today.getDate();
+        today.getFullYear();
     const lastM: Date = new Date();
     lastM.setMonth(lastM.getMonth() - 1);
     const lastMD =
-        lastM.getFullYear() +
+        lastM.getMonth() +
+        1 +
         '-' +
-        (lastM.getMonth() + 1) +
+        lastM.getDate() +
         '-' +
-        lastM.getDate();
-    return todayDate + ' AND ' + lastMD + ';';
+        lastM.getFullYear();
+    return "'" + lastMD + "'" + ' AND ' + "'" + todayDate + "'";
+}
+export async function hashPassword(pass: string): Promise<string> {
+    try {
+        const salt: number = parseInt(process.env.STORE_SALT as string);
+        const piper: string = process.env.STORE_PIPER as string;
+        pass = await bcrypt.hash(pass + piper, salt);
+        return pass;
+    } catch (err) {
+        throw err;
+    }
 }

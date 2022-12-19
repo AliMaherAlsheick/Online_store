@@ -13,6 +13,5 @@ ordersRoutes.get('/:id', authentication_1.userCheck, orders_1.show);
 ordersRoutes.get('/', authentication_1.adminCheck, orders_1.index);
 ordersRoutes.post('/', authentication_1.userCheck, orders_1.create);
 ordersRoutes.delete('/:Id', authentication_1.userCheck, orders_1.remove);
-ordersRoutes.patch('/', authentication_1.userCheck, orders_1.update);
-ordersRoutes.patch('/:Id', authentication_1.userCheck, orders_1.updateOrderProduct);
-ordersRoutes.delete('/', authentication_1.userCheck, orders_1.removeOrder);
+ordersRoutes.patch('/:id', authentication_1.userCheck, orders_1.update);
+ordersRoutes.put('/:id', authentication_1.userCheck, orders_1.removeOrderProduct);

@@ -17,7 +17,7 @@ async function show(req: Request, res: Response): Promise<Response> {
             parseInt(req.params.id)
         );
 
-        if (!product)
+        if (!product?.id)
             return res.status(404).json({ message: "product does n't exist" });
         return res.status(200).json({ message: 'show', product });
     } catch (error) {
@@ -28,7 +28,15 @@ async function create(req: Request, res: Response): Promise<Response> {
     try {
         let productData: ProductDTO = req.body;
 
-        if (!(productData.amount && productData.name && productData.price))
+        if (
+            !(
+                productData.amount &&
+                productData.name &&
+                productData.price &&
+                productData.img_url &&
+                productData.category
+            )
+        )
             return res.status(406).send({
                 message: 'please complete product data',
             });
@@ -54,7 +62,7 @@ async function create(req: Request, res: Response): Promise<Response> {
 async function remove(req: Request, res: Response) {
     try {
         const Product = await ProductModel.select(parseInt(req.params.id));
-        if (!Product)
+        if (!Product?.id)
             return res.status(404).json({ message: 'product does not exist' });
         await ProductModel.remove(Number(req.params.id));
         return res.status(200).json({
@@ -67,7 +75,7 @@ async function remove(req: Request, res: Response) {
 async function update(req: Request, res: Response) {
     try {
         const Product = await ProductModel.select(parseInt(req.params.id));
-        if (!Product)
+        if (!Product?.id)
             return res.status(404).json({ message: 'product does not exist' });
         let productData: ProductDTO = req.body;
         productData = formateProduct(productData);

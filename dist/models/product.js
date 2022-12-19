@@ -15,62 +15,92 @@ const utilites_1 = require("../utilites/utilites");
 class ProductModel {
     static selectAll() {
         return __awaiter(this, void 0, void 0, function* () {
-            const conn = yield database_1.DBConnection.connect();
-            const sql = 'SELECT SUM(order_products.quantity) AS num_of_orders,* FROM products INNER JOIN ((order_products ' +
-                'INNER JOIN orders ON orders.id=order_products.order_id ) ' +
-                'ON order_products.product_id=products.id  GROUP BY orders.id) WHERE' +
-                ' orders.date_of_creation BETWEEN' +
-                (0, utilites_1.getMonthPeriod)() +
-                'ORDER BY  num_of_orders';
-            const result = yield conn.query(sql);
-            conn.release();
-            return result.rows;
+            try {
+                const conn = yield database_1.DBConnection.connect();
+                const sql = 'SELECT SUM(order_products.quantity) AS num_of_orders,  products.* ' +
+                    'FROM( products  LEFT JOIN (order_products  ' +
+                    'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
+                    (0, utilites_1.getMonthPeriod)() +
+                    ' ) ON order_products.product_id=products.id) GROUP BY products.id ORDER BY num_of_orders,products.category,products.id ;';
+                const result = yield conn.query(sql);
+                conn.release();
+                return result.rows;
+            }
+            catch (error) {
+                throw error;
+            }
         });
     }
     static select(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const conn = yield database_1.DBConnection.connect();
-            const sql = 'SELECT * FROM products WHERE id=$1';
-            const result = yield conn.query(sql, [id]);
-            conn.release();
-            return result.rows[0];
+            try {
+                const conn = yield database_1.DBConnection.connect();
+                const sql = 'SELECT SUM(order_products.quantity) AS num_of_orders,  products.* ' +
+                    'FROM( products  LEFT JOIN (order_products  ' +
+                    'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
+                    (0, utilites_1.getMonthPeriod)() +
+                    ' ) ON order_products.product_id=products.id) WHERE products.id=$1 GROUP BY products.id ORDER BY num_of_orders,' +
+                    'products.category,products.id ;';
+                const result = yield conn.query(sql, [id]);
+                conn.release();
+                return result.rows[0];
+            }
+            catch (error) {
+                throw error;
+            }
         });
     }
     static insert(product) {
         return __awaiter(this, void 0, void 0, function* () {
-            const conn = yield database_1.DBConnection.connect();
-            const sql = 'INSERT INTO products (name,price,amount,date_of_change,img_url) ' +
-                'VALUES ($1,$2,$3,$4,$5) RETURNING *';
-            const result = yield conn.query(sql, [
-                product.name,
-                product.price,
-                product.amount,
-                product.date_of_change,
-                product.img_url,
-            ]);
-            conn.release();
-            return result.rows[0];
+            try {
+                const conn = yield database_1.DBConnection.connect();
+                const sql = 'INSERT INTO products (name,price,amount,date_of_change,img_url,category) ' +
+                    'VALUES ($1,$2,$3,$4,$5,$6) RETURNING *';
+                const result = yield conn.query(sql, [
+                    product.name,
+                    product.price,
+                    product.amount,
+                    product.date_of_change,
+                    product.img_url,
+                    product.category,
+                ]);
+                conn.release();
+                return result.rows[0];
+            }
+            catch (error) {
+                throw error;
+            }
         });
     }
     static remove(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const conn = yield database_1.DBConnection.connect();
-            const sql = 'DELETE FROM products WHERE id=$1 RETURNING *';
-            const result = yield conn.query(sql, [id]);
-            conn.release();
-            return result.rows[0];
+            try {
+                const conn = yield database_1.DBConnection.connect();
+                const sql = 'DELETE FROM products WHERE id=$1 RETURNING *';
+                const result = yield conn.query(sql, [id]);
+                conn.release();
+                return result.rows[0];
+            }
+            catch (error) {
+                throw error;
+            }
         });
     }
     static update(product, id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const conn = yield database_1.DBConnection.connect();
-            const sql = (0, utilites_1.generateProductUpdataSQL)(product);
-            const result = yield conn.query(sql.sql, [
-                id,
-                ...sql.theArray,
-            ]);
-            conn.release();
-            return result.rows[0];
+            try {
+                const conn = yield database_1.DBConnection.connect();
+                const sql = (0, utilites_1.generateProductUpdataSQL)(product);
+                const result = yield conn.query(sql.sql, [
+                    id,
+                    ...sql.theArray,
+                ]);
+                conn.release();
+                return result.rows[0];
+            }
+            catch (error) {
+                throw error;
+            }
         });
     }
 }

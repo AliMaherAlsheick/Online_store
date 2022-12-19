@@ -27,11 +27,21 @@ exports.index = index;
 function show(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            const caller = yield (0, utilites_1.Verfy)(req.headers.authorization);
+            console.log(caller);
             const user = yield user_1.UserModel.select(parseInt(req.params.id));
-            if (!user)
-                return res.status(404).json({ message: "user does n't exist" });
             user.user_password = '********';
-            return res.status(200).json({ message: 'show', user });
+            let result;
+            if (!(user === null || user === void 0 ? void 0 : user.id))
+                return res.status(404).json({ message: "user does n't exist" });
+            if ((caller === null || caller === void 0 ? void 0 : caller.user_type) === 'admin' || (user === null || user === void 0 ? void 0 : user.id) === (caller === null || caller === void 0 ? void 0 : caller.id)) {
+                result = { msg: 'ok', result: user };
+                return res.status(200).json({ message: 'show', user });
+            }
+            else
+                return res.status(400).json({
+                    message: 'not allowed',
+                });
         }
         catch (error) {
             return res.status(500).send({ message: 'error encountered', error });
@@ -95,13 +105,30 @@ exports.signUp = signUp;
 function remove(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const result = yield (0, utilites_1.checkUserExistance)(parseInt(req.params.id), req.body.user_password);
-            if (!result.valid)
-                return res.status(404).json({ message: result.msg });
-            const user = yield user_1.UserModel.remove(parseInt(req.params.id));
-            return res.status(200).json({
-                msg: 'deleted',
-            });
+            let user = req.body;
+            let caller = yield (0, utilites_1.Verfy)(req.headers.authorization);
+            if ((caller === null || caller === void 0 ? void 0 : caller.user_type) === 'admin') {
+                deleting(user, yield user_1.UserModel.select(parseInt(req.params.id)));
+            }
+            else {
+                if ((caller === null || caller === void 0 ? void 0 : caller.id) === parseInt(req.params.id) &&
+                    (yield (0, utilites_1.passwordValidation)(user.user_password, caller.user_password))) {
+                    deleting(user, caller);
+                }
+                else
+                    return res.status(404).json({ message: 'not allowed' });
+            }
+            function deleting(userData, user) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    if (user === null || user === void 0 ? void 0 : user.id) {
+                        yield user_1.UserModel.remove(parseInt(req.params.id));
+                        return res.status(200).json({
+                            msg: 'deleted',
+                        });
+                    }
+                    return res.status(404).json({ message: 'user does not exist' });
+                });
+            }
         }
         catch (error) {
             return res.status(500).send({ message: 'error encountered', error });
@@ -112,15 +139,56 @@ exports.remove = remove;
 function update(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const result = yield (0, utilites_1.checkUserExistance)(parseInt(req.params.id), req.body.user_password);
-            if (!result.valid)
-                return res.status(404).json({ message: result.msg });
-            const user = yield user_1.UserModel.update(req.body, parseInt(req.params.id));
-            user.user_password = '********';
-            return res.status(200).json({
-                msg: 'updated',
-                user,
-            });
+            let user = req.body;
+            let caller = yield (0, utilites_1.Verfy)(req.headers.authorization);
+            if ((caller === null || caller === void 0 ? void 0 : caller.user_type) === 'admin') {
+                updating(user, yield user_1.UserModel.select(parseInt(req.params.id)));
+            }
+            else {
+                if ((caller === null || caller === void 0 ? void 0 : caller.id) === parseInt(req.params.id) &&
+                    (yield (0, utilites_1.passwordValidation)(user.user_password, caller.user_password))) {
+                    updating(user, caller);
+                }
+                else
+                    return res.status(404).json({ message: 'not allowed' });
+            }
+            function updating(userData, user) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    if (user === null || user === void 0 ? void 0 : user.id) {
+                        if (userData.hasOwnProperty('new_password')) {
+                            const validate = (0, utilites_1.passwordConstrainsCheck)(userData.new_password);
+                            if (!validate.valid) {
+                                return res.status(404).json({ message: validate.msg });
+                            }
+                            else {
+                                userData.user_password = yield (0, utilites_1.hashPassword)(userData.new_password);
+                            }
+                            delete userData.new_password;
+                        }
+                        else {
+                            delete userData.user_password;
+                        }
+                        if (userData === null || userData === void 0 ? void 0 : userData.user_name) {
+                            if ((userData === null || userData === void 0 ? void 0 : userData.user_name) !== (user === null || user === void 0 ? void 0 : user.user_name)) {
+                                const validate = yield (0, utilites_1.userNameConstrainsCheck)(userData);
+                                if (!validate.valid)
+                                    return res
+                                        .status(404)
+                                        .json({ message: validate.msg });
+                            }
+                            else
+                                delete userData.user_name;
+                        }
+                        user = yield user_1.UserModel.update(userData, parseInt(req.params.id));
+                        userData.user_password = '********';
+                        return res.status(200).json({
+                            msg: 'updated',
+                            user,
+                        });
+                    }
+                    return res.status(404).json({ message: 'user does not exist' });
+                });
+            }
         }
         catch (error) {
             return res.status(500).send({ message: 'error encountered', error });
@@ -136,7 +204,7 @@ function logIn(req, res) {
                 return res.status(406).json({ message: 'invalid user name' });
             const result = yield (0, utilites_1.passwordValidation)(req.body.user_password, user === null || user === void 0 ? void 0 : user.user_password);
             if (result) {
-                const jwt = (0, utilites_1.getJWT)(parseInt(req.params.id));
+                const jwt = (0, utilites_1.getJWT)(user === null || user === void 0 ? void 0 : user.id);
                 return res.status(200).json({
                     msg: 'done',
                     id: user.id,

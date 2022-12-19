@@ -6,9 +6,7 @@ import {
     create,
     remove,
     update,
-    updateOrderProduct,
-    removeOrder,
-    showUser,
+    removeOrderProduct,
 } from '../services/orders';
 export { ordersRoutes };
 const ordersRoutes = express.Router();
@@ -16,6 +14,5 @@ ordersRoutes.get('/:id', userCheck, show);
 ordersRoutes.get('/', adminCheck, index);
 ordersRoutes.post('/', userCheck, create);
 ordersRoutes.delete('/:Id', userCheck, remove);
-ordersRoutes.patch('/', userCheck, update);
-ordersRoutes.patch('/:Id', userCheck, updateOrderProduct);
-ordersRoutes.delete('/', userCheck, removeOrder);
+ordersRoutes.patch('/:id', userCheck, update);
+ordersRoutes.put('/:id', userCheck, removeOrderProduct);
