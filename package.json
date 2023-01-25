@@ -9,7 +9,7 @@
         "demigrate": "npx db-migrate down",
         "demigrateall": "npx db-migrate reset",
         "watch": "npx tsc --watch",
-        "test": "npx jasmine",
+        "test": "ENVIRONMENT='test';npm run migrate;npx jasmine;npm run demigrateall",
         "build": "npx tsc",
         "startdev": "npx nodemon dist/server.js",
         "lint": "npx eslint --ignore-path .eslintignore ",
