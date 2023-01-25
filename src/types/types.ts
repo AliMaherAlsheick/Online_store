@@ -40,6 +40,7 @@ interface Product {
     rating: number;
     date_of_change: string;
     category: string;
+    num_of_orders?: number;
 }
 interface Order {
     id: number;
