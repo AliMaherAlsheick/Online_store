@@ -58,9 +58,7 @@ function show(req, res) {
             return res.status(200).json({ message: 'show', order });
         }
         catch (error) {
-            return res
-                .status(500)
-                .send({
+            return res.status(500).send({
                 message: 'error encountered',
                 error: error.message,
             });
@@ -107,9 +105,7 @@ function create(req, res) {
             });
         }
         catch (error) {
-            return res
-                .status(500)
-                .send({
+            return res.status(500).send({
                 message: 'error encountered',
                 error: error.message,
             });
@@ -134,9 +130,7 @@ function remove(req, res) {
             });
         }
         catch (error) {
-            return res
-                .status(500)
-                .send({
+            return res.status(500).send({
                 message: 'error encountered',
                 error: error.message,
             });
@@ -176,9 +170,7 @@ function update(req, res) {
             });
         }
         catch (error) {
-            return res
-                .status(500)
-                .send({
+            return res.status(500).send({
                 message: 'error encountered',
                 error: error.message,
             });
@@ -220,9 +212,7 @@ function addOrderProduct(req, res) {
             });
         }
         catch (error) {
-            return res
-                .status(500)
-                .send({
+            return res.status(500).send({
                 message: 'error encountered',
                 error: error.message,
             });
@@ -241,13 +231,28 @@ function updateOrderPpoducts(req, res) {
             if ((user === null || user === void 0 ? void 0 : user.user_type) !== 'admin' && (user === null || user === void 0 ? void 0 : user.id) !== (order === null || order === void 0 ? void 0 : order.user_id))
                 return res.status(400).json({ message: 'not allowed' });
             const orderData = (0, utilites_1.formateOrder)(req.body);
-            if ((orderData === null || orderData === void 0 ? void 0 : orderData.quantity) || (orderData === null || orderData === void 0 ? void 0 : orderData.product_id)) {
+            if (orderData === null || orderData === void 0 ? void 0 : orderData.product_id) {
                 const product = yield product_1.ProductModel.select(orderData.product_id);
                 if (!(product === null || product === void 0 ? void 0 : product.id))
                     return res.status(404).json({
                         msg: 'product does not exist',
                     });
                 const orderProduct = yield orders_1.OrdersModel.updateOrderProduct(orderData, parseInt(req.params.id));
+                order = yield orders_1.OrdersModel.select(orderP.order_id);
+                return res.status(200).json({
+                    msg: 'updated',
+                    order,
+                    editedProduct: orderProduct,
+                });
+            }
+            else if (orderData === null || orderData === void 0 ? void 0 : orderData.quantity) {
+                let orderProduct = yield orders_1.OrdersModel.selectOrderP(parseInt(req.params.id));
+                const product = yield product_1.ProductModel.select(orderProduct.product_id);
+                if (!(product === null || product === void 0 ? void 0 : product.id))
+                    return res.status(404).json({
+                        msg: 'product does not exist',
+                    });
+                orderProduct = yield orders_1.OrdersModel.updateOrderProduct(orderData, orderProduct.id);
                 order = yield orders_1.OrdersModel.select(orderP.order_id);
                 return res.status(200).json({
                     msg: 'updated',

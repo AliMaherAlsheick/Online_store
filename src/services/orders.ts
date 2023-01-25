@@ -50,12 +50,10 @@ async function show(req: Request, res: Response) {
         } else return res.status(400).json({ message: 'not allowed' });
         return res.status(200).json({ message: 'show', order });
     } catch (error) {
-        return res
-            .status(500)
-            .send({
-                message: 'error encountered',
-                error: (error as Error).message,
-            });
+        return res.status(500).send({
+            message: 'error encountered',
+            error: (error as Error).message,
+        });
     }
 }
 async function showUser(id: number): Promise<Order[] | Error> {
@@ -94,12 +92,10 @@ async function create(req: Request, res: Response) {
             Order,
         });
     } catch (error) {
-        return res
-            .status(500)
-            .send({
-                message: 'error encountered',
-                error: (error as Error).message,
-            });
+        return res.status(500).send({
+            message: 'error encountered',
+            error: (error as Error).message,
+        });
     }
 }
 async function remove(req: Request, res: Response) {
@@ -118,12 +114,10 @@ async function remove(req: Request, res: Response) {
             msg: 'deleted',
         });
     } catch (error) {
-        return res
-            .status(500)
-            .send({
-                message: 'error encountered',
-                error: (error as Error).message,
-            });
+        return res.status(500).send({
+            message: 'error encountered',
+            error: (error as Error).message,
+        });
     }
 }
 async function update(req: Request, res: Response) {
@@ -158,12 +152,10 @@ async function update(req: Request, res: Response) {
             Order,
         });
     } catch (error) {
-        return res
-            .status(500)
-            .send({
-                message: 'error encountered',
-                error: (error as Error).message,
-            });
+        return res.status(500).send({
+            message: 'error encountered',
+            error: (error as Error).message,
+        });
     }
 }
 async function addOrderProduct(req: Request, res: Response) {
@@ -203,12 +195,10 @@ async function addOrderProduct(req: Request, res: Response) {
             order,
         });
     } catch (error) {
-        return res
-            .status(500)
-            .send({
-                message: 'error encountered',
-                error: (error as Error).message,
-            });
+        return res.status(500).send({
+            message: 'error encountered',
+            error: (error as Error).message,
+        });
     }
 }
 async function updateOrderPpoducts(req: Request, res: Response) {
@@ -221,7 +211,7 @@ async function updateOrderPpoducts(req: Request, res: Response) {
         if (user?.user_type !== 'admin' && user?.id !== order?.user_id)
             return res.status(400).json({ message: 'not allowed' });
         const orderData = formateOrder(req.body);
-        if (orderData?.quantity || orderData?.product_id) {
+        if (orderData?.product_id) {
             const product = await ProductModel.select(orderData.product_id);
             if (!product?.id)
                 return res.status(404).json({
@@ -230,6 +220,25 @@ async function updateOrderPpoducts(req: Request, res: Response) {
             const orderProduct = await OrdersModel.updateOrderProduct(
                 orderData,
                 parseInt(req.params.id)
+            );
+            order = await OrdersModel.select(orderP.order_id);
+            return res.status(200).json({
+                msg: 'updated',
+                order,
+                editedProduct: orderProduct,
+            });
+        } else if (orderData?.quantity) {
+            let orderProduct = await OrdersModel.selectOrderP(
+                parseInt(req.params.id)
+            );
+            const product = await ProductModel.select(orderProduct.product_id);
+            if (!product?.id)
+                return res.status(404).json({
+                    msg: 'product does not exist',
+                });
+            orderProduct = await OrdersModel.updateOrderProduct(
+                orderData,
+                orderProduct.id
             );
             order = await OrdersModel.select(orderP.order_id);
             return res.status(200).json({
