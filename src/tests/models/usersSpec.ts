@@ -1,10 +1,10 @@
 import { UserModel } from '../../models/user';
 import { User, UserDTO } from '../../types/types';
-console.log('testing models environment' + process.env.ENVIRONMENT);
+console.log('testing user models environment' + process.env.ENVIRONMENT);
 const UserData: UserDTO = {
     first_name: 'mero',
     last_name: 'mondo',
-    date_of_creation: '12-13-1996',
+    date_of_creation: 'Fri Dec 13 1996',
     email: 'mando@example.com',
     user_name: 'meromando',
     user_password: '123456abcd',
@@ -15,7 +15,7 @@ let user: User = {
     id: 1,
     first_name: 'mero',
     last_name: 'mondo',
-    date_of_creation: '12-13-1996',
+    date_of_creation: 'Fri Dec 13 1996',
     email: 'mando@example.com',
     user_name: 'meromando',
     user_password: '123456abcd',
@@ -37,10 +37,17 @@ describe('Tests for user model', () => {
             user_type: string;
         } = { ...user };
         delete response.id;
-        expect(response).toEqual({
+        expect({
+            ...response,
+            date_of_creation: new Date(
+                response.date_of_creation
+            ).toDateString(),
+        }).toEqual({
             first_name: 'mero',
             last_name: 'mondo',
-            date_of_creation: '12-13-1996',
+            date_of_creation: new Date(
+                'Fri Dec 13 1996 00:00:00 GMT-0800 (Pacific Standard Time)'
+            ).toDateString(),
             email: 'mando@example.com',
             user_name: 'meromando',
             user_password: '123456abcd',
@@ -52,7 +59,7 @@ describe('Tests for user model', () => {
         expect(user.id).toBeGreaterThan(0);
     });
     it('expect the response to be the same as user', async () => {
-        const response = await UserModel.select(1);
+        const response = await UserModel.select(user.id);
         expect(response).toEqual(user);
     });
     it('expects the responce to be array containing user as last element', async () => {
