@@ -87,7 +87,6 @@ class UserModel {
         try {
             const conn = await DBConnection.connect();
             const sql = generateUpdataSQL(user);
-            console.log(sql[0], [id, ...sql[1]]);
             const result = await conn.query<User>(sql[0], [id, ...sql[1]]);
             conn.release();
 

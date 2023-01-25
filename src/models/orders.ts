@@ -12,7 +12,7 @@ class OrdersModel {
 
             const sql =
                 'SELECT orders.* ,COALESCE(SUM(order_products.quantity*products.price),0) AS products_cost ' +
-                ',COALESCE((SUM(order_products.quantity*products.price)+orders.delivery_cost),0)AS total_cost' +
+                ',COALESCE((CAST(SUM(order_products.quantity*products.price) as INTEGER) + orders.delivery_cost),0)AS total_cost' +
                 ' FROM( orders LEFT JOIN( order_products INNER JOIN products ON ' +
                 'order_products.product_id=products.id)' +
                 'ON orders.id=order_products.order_id ) GROUP BY orders.id ORDER BY orders.id';
@@ -31,7 +31,7 @@ class OrdersModel {
             const conn = await DBConnection.connect();
             const sql =
                 'SELECT orders.* ,COALESCE(SUM(order_products.quantity*products.price),0) AS products_cost ' +
-                ',COALESCE((SUM(order_products.quantity*products.price)+orders.delivery_cost),0)AS total_cost' +
+                ',COALESCE((CAST(SUM(order_products.quantity*products.price) as INTEGER) + orders.delivery_cost),0)AS total_cost' +
                 ' FROM( orders LEFT JOIN( order_products INNER JOIN products ON ' +
                 'order_products.product_id=products.id)' +
                 'ON orders.id=order_products.order_id ) WHERE orders.id=$1 GROUP BY orders.id ORDER BY orders.id';
@@ -55,7 +55,7 @@ class OrdersModel {
             const conn = await DBConnection.connect();
             const sql =
                 'SELECT orders.* ,COALESCE(SUM(order_products.quantity*products.price),0) AS products_cost ' +
-                ',COALESCE((SUM(order_products.quantity*products.price)+orders.delivery_cost),0)AS total_cost' +
+                ',COALESCE((CAST(SUM(order_products.quantity*products.price) as INTEGER) + orders.delivery_cost),0)AS total_cost' +
                 ' FROM( orders LEFT JOIN( order_products INNER JOIN products ON ' +
                 'order_products.product_id=products.id)' +
                 'ON orders.id=order_products.order_id ) WHERE orders.user_id=$1  GROUP BY orders.id ORDER BY orders.id';
@@ -130,7 +130,7 @@ class OrdersModel {
             throw err;
         }
     }
-    static async removeProducts(id: number) {
+    static async removeProducts(id: number): Promise<void> {
         try {
             const conn = await DBConnection.connect();
             let sql = 'DELETE FROM order_products  WHERE order_id=$1 ';
@@ -143,7 +143,7 @@ class OrdersModel {
             throw err;
         }
     }
-    static async removeProduct(id: number) {
+    static async removeProduct(id: number): Promise<void> {
         try {
             const conn = await DBConnection.connect();
             let sql = 'DELETE FROM order_products  WHERE id=$1 ';
@@ -156,7 +156,7 @@ class OrdersModel {
             throw err;
         }
     }
-    static async update(order: OrderDTO, id: number) {
+    static async update(order: OrderDTO, id: number): Promise<Order> {
         try {
             const conn = await DBConnection.connect();
             const sql = generateOrderUpdataSQL(order);
@@ -174,11 +174,13 @@ class OrdersModel {
             throw err;
         }
     }
-    static async updateOrderProduct(order: OrderDTO, id: number) {
+    static async updateOrderProduct(
+        order: OrderDTO,
+        id: number
+    ): Promise<orders_product> {
         try {
             const conn = await DBConnection.connect();
             const sql = generateOrderPUpdataSQL(order);
-            console.log(sql.sql, [id, ...sql.theArray]);
             const result = await conn.query<orders_product>(sql.sql, [
                 id,
                 ...sql.theArray,
@@ -192,7 +194,7 @@ class OrdersModel {
             throw err;
         }
     }
-    static async selectOrderPs(id: number) {
+    static async selectOrderPs(id: number): Promise<orders_product[]> {
         try {
             const conn = await DBConnection.connect();
             const sql =
@@ -209,7 +211,7 @@ class OrdersModel {
             throw err;
         }
     }
-    static async selectOrderP(id: number) {
+    static async selectOrderP(id: number): Promise<orders_product> {
         try {
             const conn = await DBConnection.connect();
             const sql =

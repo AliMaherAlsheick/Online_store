@@ -7,7 +7,7 @@ class ProductModel {
         try {
             const conn = await DBConnection.connect();
             const sql =
-                'SELECT COALESCE(SUM(order_products.quantity),0)AS num_of_orders,  products.* ' +
+                'SELECT COALESCE(CAST(SUM(order_products.quantity) as INTEGER),0)AS num_of_orders,  products.* ' +
                 'FROM( products  LEFT JOIN (order_products  ' +
                 'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
                 getMonthPeriod() +
@@ -26,7 +26,7 @@ class ProductModel {
         try {
             const conn = await DBConnection.connect();
             const sql =
-                'SELECT COALESCE(SUM(order_products.quantity),0) AS num_of_orders,  products.* ' +
+                'SELECT COALESCE(CAST(SUM(order_products.quantity) as INTEGER),0) AS num_of_orders,  products.* ' +
                 'FROM( products  LEFT JOIN (order_products  ' +
                 'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
                 getMonthPeriod() +
@@ -104,7 +104,7 @@ class ProductModel {
         try {
             const conn = await DBConnection.connect();
             const sql =
-                'SELECT COALESCE(SUM(order_products.quantity),0) AS num_of_orders,  products.* ' +
+                'SELECT COALESCE(CAST(SUM(order_products.quantity) as INTEGER),0) AS num_of_orders,  products.* ' +
                 'FROM( products  LEFT JOIN (order_products  ' +
                 'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
                 getMonthPeriod() +
