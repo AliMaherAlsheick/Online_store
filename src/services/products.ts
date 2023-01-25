@@ -62,7 +62,7 @@ async function create(req: Request, res: Response): Promise<Response> {
         return res.status(500).send({ message: 'error encountered', error });
     }
 }
-async function remove(req: Request, res: Response) {
+async function remove(req: Request, res: Response): Promise<Response> {
     try {
         const Product = await ProductModel.select(parseInt(req.params.id));
         if (!Product?.id)
@@ -75,7 +75,7 @@ async function remove(req: Request, res: Response) {
         return res.status(500).send({ message: 'error encountered', error });
     }
 }
-async function update(req: Request, res: Response) {
+async function update(req: Request, res: Response): Promise<Response> {
     try {
         const Product = await ProductModel.select(parseInt(req.params.id));
         if (!Product?.id)

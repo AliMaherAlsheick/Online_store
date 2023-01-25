@@ -12,7 +12,7 @@ import {
 } from '../utilites/utilites';
 export { index, show, signUp, remove, update, logIn };
 
-async function index(req: Request, res: Response) {
+async function index(req: Request, res: Response): Promise<void> {
     try {
         const users: User[] = await UserModel.selectAll();
         res.send({ message: 'ok', users });
@@ -92,7 +92,7 @@ async function signUp(req: Request, res: Response): Promise<Response> {
         return res.status(500).send({ message: 'error encountered', error });
     }
 }
-async function remove(req: Request, res: Response) {
+async function remove(req: Request, res: Response): Promise<void | Response> {
     try {
         let user: UserDTO = req.body;
         let caller: User = await Verfy(req.headers.authorization);
@@ -123,7 +123,7 @@ async function remove(req: Request, res: Response) {
         return res.status(500).send({ message: 'error encountered', error });
     }
 }
-async function update(req: Request, res: Response) {
+async function update(req: Request, res: Response): Promise<Response | void> {
     try {
         let user: UserDTO = req.body;
         let caller: User = await Verfy(req.headers.authorization);

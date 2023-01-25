@@ -13,7 +13,7 @@ import { OrdersModel } from '../models/orders';
 import { ProductModel } from '../models/product';
 import { Order, OrderDTO, orders_product } from '../types/types';
 import { formateOrder, Verfy } from '../utilites/utilites';
-async function index(req: Request, res: Response) {
+async function index(req: Request, res: Response): Promise<void> {
     try {
         const user = await Verfy(req.headers.authorization);
 
@@ -36,7 +36,7 @@ async function index(req: Request, res: Response) {
         });
     }
 }
-async function show(req: Request, res: Response) {
+async function show(req: Request, res: Response): Promise<Response> {
     try {
         const user = await Verfy(req.headers.authorization);
         let result: { result: unknown; msg: string };
@@ -66,7 +66,7 @@ async function showUser(id: number): Promise<Order[] | Error> {
         return new Error((error as { message: string })?.message);
     }
 }
-async function create(req: Request, res: Response) {
+async function create(req: Request, res: Response): Promise<Response> {
     try {
         const orderData: OrderDTO = formateOrder(req.body);
         orderData.user_id = (await Verfy(req.headers.authorization))?.id;
@@ -98,7 +98,7 @@ async function create(req: Request, res: Response) {
         });
     }
 }
-async function remove(req: Request, res: Response) {
+async function remove(req: Request, res: Response): Promise<Response> {
     try {
         const user = await Verfy(req.headers.authorization);
         //if(Number.isNaN(parseInt(req.params.id)))return res.status(400).json({ message: 'you must ass valid ' });
@@ -120,7 +120,7 @@ async function remove(req: Request, res: Response) {
         });
     }
 }
-async function update(req: Request, res: Response) {
+async function update(req: Request, res: Response): Promise<Response> {
     try {
         const user = await Verfy(req.headers.authorization);
         const order: Order = await OrdersModel.select(parseInt(req.params.id));
@@ -158,7 +158,7 @@ async function update(req: Request, res: Response) {
         });
     }
 }
-async function addOrderProduct(req: Request, res: Response) {
+async function addOrderProduct(req: Request, res: Response): Promise<Response> {
     try {
         const order_productData = req.body;
         order_productData.amount = parseInt('' + order_productData.amount);
@@ -201,7 +201,10 @@ async function addOrderProduct(req: Request, res: Response) {
         });
     }
 }
-async function updateOrderPpoducts(req: Request, res: Response) {
+async function updateOrderPpoducts(
+    req: Request,
+    res: Response
+): Promise<Response> {
     try {
         const user = await Verfy(req.headers.authorization);
         const orderP = await OrdersModel.selectOrderP(parseInt(req.params.id));

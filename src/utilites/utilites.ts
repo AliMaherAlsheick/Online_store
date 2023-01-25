@@ -59,14 +59,19 @@ export async function formateNewUser(userData: UserDTO): Promise<UserDTO> {
     }
 }
 export function getJWT(id: number): string {
-    return jwt.sign({ id }, process.env.STORE_JWT_TOKEN as string);
+    return jwt.sign(
+        { id },
+        process.env.STORE_JWT_TOKEN?.trimEnd().split("'").join('') as string
+    );
 }
 export async function passwordValidation(
     password: string,
     hashedPassword: string
 ): Promise<boolean> {
     try {
-        const piper: string = process.env.STORE_PIPER as string;
+        const piper: string = process.env.STORE_PIPER?.trimEnd()
+            .split("'")
+            .join('') as string;
         const result = await bcrypt.compare(password + piper, hashedPassword);
 
         return result;
@@ -114,11 +119,14 @@ export function formateProduct(productData: ProductDTO): ProductDTO {
         today.getFullYear();
     return productData;
 }
-export function generateProductUpdataSQL(product: ProductDTO) {
+export function generateProductUpdataSQL(product: ProductDTO): {
+    sql: string;
+    theArray: (number | string)[];
+} {
     let sql: string = 'UPDATE products SET ';
     let n: number = 1;
     const coloums: string[] = [];
-    const theArray = [];
+    const theArray: (number | string)[] = [];
     const keys = [
         'name',
         'price',
@@ -137,11 +145,14 @@ export function generateProductUpdataSQL(product: ProductDTO) {
     sql += coloums.join(',') + ' WHERE id=$1 RETURNING *';
     return { sql, theArray };
 }
-export function generateOrderUpdataSQL(order: OrderDTO) {
+export function generateOrderUpdataSQL(order: OrderDTO): {
+    sql: string;
+    theArray: (number | string)[];
+} {
     let sql: string = 'UPDATE orders SET ';
     let n: number = 1;
     const coloums: string[] = [];
-    const theArray = [];
+    const theArray: (number | string)[] = [];
     const keys = [
         'status',
         'order_address',
@@ -151,13 +162,13 @@ export function generateOrderUpdataSQL(order: OrderDTO) {
     for (let key of keys) {
         if (order.hasOwnProperty(key)) {
             coloums.push(key + '=$' + ++n);
-            theArray.push(order[key]);
+            theArray.push(order[key] as number | string);
         }
     }
     sql += coloums.join(',') + ' WHERE id=$1 RETURNING *';
     return { sql, theArray };
 }
-export function formateOrder(orderData: OrderDTO) {
+export function formateOrder(orderData: OrderDTO): OrderDTO {
     const today: Date = new Date();
     orderData.date =
         today.getMonth() +
@@ -177,7 +188,12 @@ export async function Verfy(authorization: string | undefined): Promise<User> {
 
         const user = UserModel.select(
             (
-                jwt.verify(JWT, process.env.STORE_JWT_TOKEN as string) as {
+                jwt.verify(
+                    JWT,
+                    process.env.STORE_JWT_TOKEN?.trimEnd()
+                        .split("'")
+                        .join('') as string
+                ) as {
                     id: number;
                 }
             )?.id
@@ -209,24 +225,31 @@ export function getMonthPeriod(): string {
 }
 export async function hashPassword(pass: string): Promise<string> {
     try {
-        const salt: number = parseInt(process.env.STORE_SALT as string);
-        const piper: string = process.env.STORE_PIPER as string;
+        const salt: number = parseInt(
+            process.env.STORE_SALT?.trimEnd().split("'").join('') as string
+        );
+        const piper: string = process.env.STORE_PIPER?.trimEnd()
+            .split("'")
+            .join('') as string;
         pass = await bcrypt.hash(pass + piper, salt);
         return pass;
     } catch (err) {
         throw err;
     }
 }
-export function generateOrderPUpdataSQL(order: OrderDTO) {
+export function generateOrderPUpdataSQL(order: OrderDTO): {
+    sql: string;
+    theArray: (number | string)[];
+} {
     let sql: string = 'UPDATE order_products SET ';
     let n: number = 1;
     const coloums: string[] = [];
-    const theArray = [];
+    const theArray: (number | string)[] = [];
     const keys = ['quantity', 'product_id'] as unknown as (keyof OrderDTO)[];
     for (let key of keys) {
         if (order.hasOwnProperty(key)) {
             coloums.push(key + '=$' + ++n);
-            theArray.push(order[key]);
+            theArray.push(order[key] as number | string);
         }
     }
     sql += coloums.join(',') + ' WHERE id=$1 RETURNING *';
