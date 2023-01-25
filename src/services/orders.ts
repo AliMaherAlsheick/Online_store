@@ -1,5 +1,14 @@
 import { Request, Response } from 'express';
-export { index, show, create, remove, update, showUser, removeOrderProduct };
+export {
+    index,
+    show,
+    create,
+    remove,
+    update,
+    showUser,
+    updateOrderPpoducts,
+    addOrderProduct,
+};
 import { OrdersModel } from '../models/orders';
 import { ProductModel } from '../models/product';
 import { Order, OrderDTO, orders_product } from '../types/types';
@@ -14,14 +23,17 @@ async function index(req: Request, res: Response) {
         } else {
             const reslt = await showUser(user.id);
             result = {
-                msg: reslt instanceof Error ? 'error encountered' : 'ok',
-                result: reslt instanceof Error ? reslt.message : reslt,
+                msg: 'ok',
+                result: await OrdersModel.userOrders(user.id),
             };
         }
 
         res.send({ message: result.msg, result: result.result });
     } catch (error) {
-        res.status(500).send({ message: 'error encountered', error });
+        res.status(500).send({
+            message: 'error encountered',
+            error: (error as Error).message,
+        });
     }
 }
 async function show(req: Request, res: Response) {
@@ -38,7 +50,12 @@ async function show(req: Request, res: Response) {
         } else return res.status(400).json({ message: 'not allowed' });
         return res.status(200).json({ message: 'show', order });
     } catch (error) {
-        return res.status(500).send({ message: 'error encountered', error });
+        return res
+            .status(500)
+            .send({
+                message: 'error encountered',
+                error: (error as Error).message,
+            });
     }
 }
 async function showUser(id: number): Promise<Order[] | Error> {
@@ -57,16 +74,17 @@ async function create(req: Request, res: Response) {
         orderData.user_id = (await Verfy(req.headers.authorization))?.id;
         orderData.status = 'active';
         if (
-            !orderData?.amount ||
+            !orderData?.quantity ||
             !orderData?.product_id ||
-            !(await ProductModel.select(orderData?.product_id)).id ||
+            !(await ProductModel.select(orderData?.product_id))?.id ||
             !orderData?.order_address
         )
             return res.status(406).send({
                 message:
-                    'please complete Order data: product_id ,amount and ' +
-                    'order_address are required , product id must be vaid product_id and amount must be number',
+                    'please complete Order data: product_id ,quantity and ' +
+                    'order_address are required , product id must be vaid product_id and quantity must be number',
                 orderData,
+                body: req.body,
             });
         const Order: Order = await OrdersModel.insert(orderData);
         await OrdersModel.addProduct(Order.id, orderData);
@@ -76,85 +94,161 @@ async function create(req: Request, res: Response) {
             Order,
         });
     } catch (error) {
-        return res.status(500).send({ message: 'error encountered', error });
+        return res
+            .status(500)
+            .send({
+                message: 'error encountered',
+                error: (error as Error).message,
+            });
     }
 }
 async function remove(req: Request, res: Response) {
     try {
         const user = await Verfy(req.headers.authorization);
+        //if(Number.isNaN(parseInt(req.params.id)))return res.status(400).json({ message: 'you must ass valid ' });
         const order: Order = await OrdersModel.select(parseInt(req.params.id));
         if (!order?.id)
             return res.status(404).json({ message: "Order does n't exist" });
         if (user?.user_type !== 'admin' && user?.id !== order?.user_id)
             return res.status(400).json({ message: 'not allowed' });
-        await OrdersModel.remove(Number(req.params.id));
         await OrdersModel.removeProducts(Number(req.params.id));
+        await OrdersModel.remove(Number(req.params.id));
+
         return res.status(200).json({
             msg: 'deleted',
         });
     } catch (error) {
-        return res.status(500).send({ message: 'error encountered', error });
+        return res
+            .status(500)
+            .send({
+                message: 'error encountered',
+                error: (error as Error).message,
+            });
     }
 }
 async function update(req: Request, res: Response) {
     try {
         const user = await Verfy(req.headers.authorization);
         const order: Order = await OrdersModel.select(parseInt(req.params.id));
-        let orderData: OrderDTO = await formateOrder(req.body);
+        let orderData: OrderDTO = formateOrder(req.body);
         if (!order?.id)
             return res.status(404).json({ message: "Order does n't exist" });
         if (user?.user_type === 'admin') {
         } else if (user?.id === order?.user_id) {
+            if (orderData.hasOwnProperty('status')) delete orderData.status;
+            if (orderData.hasOwnProperty('user_id')) delete orderData.user_id;
         } else return res.status(400).json({ message: 'not allowed' });
+        if (
+            !(
+                orderData.status ||
+                orderData.order_address ||
+                orderData.delivery_cost ||
+                orderData.user_id
+            )
+        )
+            return res.status(200).json({
+                msg: 'add properites to update',
+            });
         const Order = await OrdersModel.update(
             orderData,
             parseInt(req.params.id)
         );
-        if (orderData?.product_id) {
-            Order.products = [
-                await OrdersModel.updateOrderProduct(
-                    orderData,
-                    orderData.product_id
-                ),
-            ];
-        } else {
-            Order.products = [
-                await OrdersModel.addProduct(
-                    parseInt(req.params.id),
-                    orderData
-                ),
-            ];
-        }
-
         return res.status(200).json({
             msg: 'updated',
             Order,
         });
     } catch (error) {
-        return res.status(500).send({ message: 'error encountered', error });
+        return res
+            .status(500)
+            .send({
+                message: 'error encountered',
+                error: (error as Error).message,
+            });
     }
 }
-async function removeOrderProduct(req: Request, res: Response) {
+async function addOrderProduct(req: Request, res: Response) {
+    try {
+        const order_productData = req.body;
+        order_productData.amount = parseInt('' + order_productData.amount);
+        order_productData.product_id = parseInt(
+            '' + order_productData.product_id
+        );
+        let order: Order = await OrdersModel.select(parseInt(req.params.id));
+        if (order?.user_id !== (await Verfy(req.headers.authorization))?.id)
+            return res.status(406).send({
+                message: 'not allowed ',
+                order_productData,
+            });
+        if (!order?.id)
+            return res.status(406).send({
+                message: 'order does not exist ',
+                order_productData,
+            });
+        if (
+            !order_productData?.amount ||
+            !order_productData?.product_id ||
+            !(await ProductModel.select(order_productData?.product_id))?.id
+        )
+            return res.status(406).send({
+                message:
+                    'please complete Order data: product_id ,amount and ' +
+                    'order_address are required , product id must be vaid product_id and amount must be number',
+                order_productData,
+            });
+
+        await OrdersModel.addProduct(order.id, order_productData);
+        order = await OrdersModel.select(parseInt(req.params.id));
+        return res.status(200).json({
+            msg: 'Order was addition completed successfully',
+            order,
+        });
+    } catch (error) {
+        return res
+            .status(500)
+            .send({
+                message: 'error encountered',
+                error: (error as Error).message,
+            });
+    }
+}
+async function updateOrderPpoducts(req: Request, res: Response) {
     try {
         const user = await Verfy(req.headers.authorization);
-        const order: Order = await OrdersModel.select(
-            parseInt(req.body.order_id)
-        );
-        if (!order?.id)
+        const orderP = await OrdersModel.selectOrderP(parseInt(req.params.id));
+        let order: Order = await OrdersModel.select(orderP?.order_id);
+        if (!orderP?.id || !order?.id)
             return res.status(404).json({ message: "Order does n't exist" });
         if (user?.user_type !== 'admin' && user?.id !== order?.user_id)
             return res.status(400).json({ message: 'not allowed' });
-        const orderP = await OrdersModel.selectOrderP(parseInt(req.params.id));
-        if (!orderP?.id)
-            return res
-                .status(404)
-                .json({ message: 'Order_product does not exist' });
-        const Order = await OrdersModel.removeProduct(parseInt(req.params.id));
-        return res.status(200).json({
-            msg: 'deleted',
-            Order,
-        });
+        const orderData = formateOrder(req.body);
+        if (orderData?.quantity || orderData?.product_id) {
+            const product = await ProductModel.select(orderData.product_id);
+            if (!product?.id)
+                return res.status(404).json({
+                    msg: 'product does not exist',
+                });
+            const orderProduct = await OrdersModel.updateOrderProduct(
+                orderData,
+                parseInt(req.params.id)
+            );
+            order = await OrdersModel.select(orderP.order_id);
+            return res.status(200).json({
+                msg: 'updated',
+                order,
+                editedProduct: orderProduct,
+            });
+        } else {
+            await OrdersModel.removeProduct(parseInt(req.params.id));
+            order = await OrdersModel.select(orderP.order_id);
+            return res.status(200).json({
+                msg: 'deleted',
+                order,
+            });
+        }
     } catch (error) {
-        return res.status(500).send({ message: 'error encountered', error });
+        return res.status(500).send({
+            message: 'error encountered',
+            error: (error as Error).message,
+        });
     }
 }

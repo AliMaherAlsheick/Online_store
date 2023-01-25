@@ -7,33 +7,39 @@ class ProductModel {
         try {
             const conn = await DBConnection.connect();
             const sql =
-                'SELECT SUM(order_products.quantity) AS num_of_orders,  products.* ' +
+                'SELECT COALESCE(SUM(order_products.quantity),0)AS num_of_orders,  products.* ' +
                 'FROM( products  LEFT JOIN (order_products  ' +
                 'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
                 getMonthPeriod() +
-                ' ) ON order_products.product_id=products.id) GROUP BY products.id ORDER BY num_of_orders,products.category,products.id ;';
+                ' ) ON order_products.product_id=products.id) GROUP BY products.id ORDER BY num_of_orders DESC,products.category,products.id ;';
             const result = await conn.query<Product>(sql);
             conn.release();
             return result.rows;
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
     static async select(id: number): Promise<Product> {
         try {
             const conn = await DBConnection.connect();
             const sql =
-                'SELECT SUM(order_products.quantity) AS num_of_orders,  products.* ' +
+                'SELECT COALESCE(SUM(order_products.quantity),0) AS num_of_orders,  products.* ' +
                 'FROM( products  LEFT JOIN (order_products  ' +
                 'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
                 getMonthPeriod() +
-                ' ) ON order_products.product_id=products.id) WHERE products.id=$1 GROUP BY products.id ORDER BY num_of_orders,' +
+                ' ) ON order_products.product_id=products.id) WHERE products.id=$1 GROUP BY products.id ORDER BY num_of_orders DESC,' +
                 'products.category,products.id ;';
             const result = await conn.query<Product>(sql, [id]);
             conn.release();
             return result.rows[0];
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
     static async insert(product: ProductDTO): Promise<Product> {
@@ -53,7 +59,10 @@ class ProductModel {
             conn.release();
             return result.rows[0];
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
     static async remove(id: number): Promise<Product> {
@@ -64,7 +73,10 @@ class ProductModel {
             conn.release();
             return result.rows[0];
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
     static async update(product: ProductDTO, id: number): Promise<Product> {
@@ -79,7 +91,35 @@ class ProductModel {
             conn.release();
             return result.rows[0];
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
+        }
+    }
+    static async find(
+        option: string,
+        values: (string | Number)[]
+    ): Promise<Product[]> {
+        try {
+            const conn = await DBConnection.connect();
+            const sql =
+                'SELECT COALESCE(SUM(order_products.quantity),0) AS num_of_orders,  products.* ' +
+                'FROM( products  LEFT JOIN (order_products  ' +
+                'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
+                getMonthPeriod() +
+                ' ) ON order_products.product_id=products.id) WHERE ' +
+                option +
+                ' GROUP BY products.id ORDER BY num_of_orders DESC,' +
+                'products.category,products.id ';
+            const result = await conn.query<Product>(sql, values);
+            conn.release();
+            return result.rows;
+        } catch (error) {
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
 }

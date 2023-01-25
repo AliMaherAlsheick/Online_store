@@ -11,7 +11,10 @@ class UserModel {
             conn.release();
             return result.rows;
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
     static async select(id: number): Promise<User> {
@@ -22,7 +25,10 @@ class UserModel {
             conn.release();
             return result.rows[0];
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
     static async selectUser(user_name: string): Promise<User> {
@@ -33,7 +39,10 @@ class UserModel {
             conn.release();
             return result.rows[0];
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
     static async insert(user: UserDTO): Promise<User> {
@@ -54,7 +63,10 @@ class UserModel {
             conn.release();
             return result.rows[0];
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
     static async remove(id: number): Promise<void> {
@@ -65,7 +77,10 @@ class UserModel {
             conn.release();
             return;
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
     static async update(user: UserDTO, id: number): Promise<User> {
@@ -78,7 +93,10 @@ class UserModel {
 
             return result.rows[0];
         } catch (error) {
-            throw error;
+            const err = new Error(
+                'error in your data ' + (error as Error).message
+            );
+            throw err;
         }
     }
 }

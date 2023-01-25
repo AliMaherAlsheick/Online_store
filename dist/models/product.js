@@ -17,17 +17,18 @@ class ProductModel {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const conn = yield database_1.DBConnection.connect();
-                const sql = 'SELECT SUM(order_products.quantity) AS num_of_orders,  products.* ' +
+                const sql = 'SELECT COALESCE(SUM(order_products.quantity),0)AS num_of_orders,  products.* ' +
                     'FROM( products  LEFT JOIN (order_products  ' +
                     'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
                     (0, utilites_1.getMonthPeriod)() +
-                    ' ) ON order_products.product_id=products.id) GROUP BY products.id ORDER BY num_of_orders,products.category,products.id ;';
+                    ' ) ON order_products.product_id=products.id) GROUP BY products.id ORDER BY num_of_orders DESC,products.category,products.id ;';
                 const result = yield conn.query(sql);
                 conn.release();
                 return result.rows;
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }
@@ -35,18 +36,19 @@ class ProductModel {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const conn = yield database_1.DBConnection.connect();
-                const sql = 'SELECT SUM(order_products.quantity) AS num_of_orders,  products.* ' +
+                const sql = 'SELECT COALESCE(SUM(order_products.quantity),0) AS num_of_orders,  products.* ' +
                     'FROM( products  LEFT JOIN (order_products  ' +
                     'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
                     (0, utilites_1.getMonthPeriod)() +
-                    ' ) ON order_products.product_id=products.id) WHERE products.id=$1 GROUP BY products.id ORDER BY num_of_orders,' +
+                    ' ) ON order_products.product_id=products.id) WHERE products.id=$1 GROUP BY products.id ORDER BY num_of_orders DESC,' +
                     'products.category,products.id ;';
                 const result = yield conn.query(sql, [id]);
                 conn.release();
                 return result.rows[0];
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }
@@ -68,7 +70,8 @@ class ProductModel {
                 return result.rows[0];
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }
@@ -82,7 +85,8 @@ class ProductModel {
                 return result.rows[0];
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }
@@ -99,7 +103,31 @@ class ProductModel {
                 return result.rows[0];
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
+            }
+        });
+    }
+    static find(option, values) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const conn = yield database_1.DBConnection.connect();
+                const sql = 'SELECT COALESCE(SUM(order_products.quantity),0) AS num_of_orders,  products.* ' +
+                    'FROM( products  LEFT JOIN (order_products  ' +
+                    'INNER JOIN orders ON orders.id=order_products.order_id AND orders.date_of_creation BETWEEN ' +
+                    (0, utilites_1.getMonthPeriod)() +
+                    ' ) ON order_products.product_id=products.id) WHERE ' +
+                    option +
+                    ' GROUP BY products.id ORDER BY num_of_orders DESC,' +
+                    'products.category,products.id ';
+                console.log(sql, values);
+                const result = yield conn.query(sql, values);
+                conn.release();
+                return result.rows;
+            }
+            catch (error) {
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }

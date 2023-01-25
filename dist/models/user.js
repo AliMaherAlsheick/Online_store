@@ -23,7 +23,8 @@ class UserModel {
                 return result.rows;
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }
@@ -37,7 +38,8 @@ class UserModel {
                 return result.rows[0];
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }
@@ -51,7 +53,8 @@ class UserModel {
                 return result.rows[0];
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }
@@ -74,7 +77,8 @@ class UserModel {
                 return result.rows[0];
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }
@@ -88,7 +92,8 @@ class UserModel {
                 return;
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }
@@ -103,7 +108,8 @@ class UserModel {
                 return result.rows[0];
             }
             catch (error) {
-                throw error;
+                const err = new Error('error in your data ' + error.message);
+                throw err;
             }
         });
     }

@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
-export { index, show, create, remove, update };
+export { index, show, create, remove, update, search };
 import { ProductModel } from '../models/product';
 import { Product, ProductDTO } from '../types/types';
-import { formateProduct } from '../utilites/utilites';
+import {
+    formateProduct,
+    generateProductSerchOption,
+} from '../utilites/utilites';
 async function index(req: Request, res: Response) {
     try {
         const products: Product[] = await ProductModel.selectAll();
@@ -96,6 +99,18 @@ async function update(req: Request, res: Response) {
             msg: 'updated',
             product,
         });
+    } catch (error) {
+        return res.status(500).send({ message: 'error encountered', error });
+    }
+}
+async function search(req: Request, res: Response): Promise<Response> {
+    try {
+        const option = generateProductSerchOption(req.body);
+        const product: Product[] = await ProductModel.find(
+            option.search,
+            option.values
+        );
+        return res.status(200).json({ message: 'show', product });
     } catch (error) {
         return res.status(500).send({ message: 'error encountered', error });
     }

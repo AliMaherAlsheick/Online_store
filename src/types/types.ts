@@ -59,8 +59,8 @@ interface orders_product {
     order_id: number;
     product_id: number;
     quantity: number;
-    product_name:string;
-    product_price:number;
+    product_name: string;
+    product_price: number;
 }
 interface ProductDTO {
     img_url: string;
@@ -71,13 +71,13 @@ interface ProductDTO {
     category: string;
 }
 interface OrderDTO {
-    user_id: number;
-    product_id: number;
-    amount: number;
-    date: string;
-    status: string;
-    delivery_cost: number;
-    order_address: string;
+    user_id?: number;
+    product_id?: number;
+    quantity?: number;
+    date?: string;
+    status?: string;
+    delivery_cost?: number;
+    order_address?: string;
 }
 interface validationResponse {
     valid: boolean;

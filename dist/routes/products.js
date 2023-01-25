@@ -14,3 +14,4 @@ productsRoutes.get('/', products_1.index);
 productsRoutes.get('/:id', products_1.show);
 productsRoutes.delete('/:id', authentication_1.adminCheck, products_1.remove);
 productsRoutes.patch('/:id', authentication_1.adminCheck, products_1.update);
+productsRoutes.put('/', products_1.search);

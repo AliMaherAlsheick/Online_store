@@ -10,8 +10,10 @@ const orders_1 = require("../services/orders");
 const ordersRoutes = express_1.default.Router();
 exports.ordersRoutes = ordersRoutes;
 ordersRoutes.get('/:id', authentication_1.userCheck, orders_1.show);
-ordersRoutes.get('/', authentication_1.adminCheck, orders_1.index);
+ordersRoutes.get('/', authentication_1.userCheck, orders_1.index);
 ordersRoutes.post('/', authentication_1.userCheck, orders_1.create);
-ordersRoutes.delete('/:Id', authentication_1.userCheck, orders_1.remove);
+ordersRoutes.post('/:id', authentication_1.userCheck, orders_1.addOrderProduct);
+ordersRoutes.delete('/:id', authentication_1.userCheck, orders_1.remove);
 ordersRoutes.patch('/:id', authentication_1.userCheck, orders_1.update);
-ordersRoutes.put('/:id', authentication_1.userCheck, orders_1.removeOrderProduct);
+ordersRoutes.put('/:id', authentication_1.userCheck, orders_1.updateOrderPpoducts);
+//tests and markdown

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.update = exports.remove = exports.create = exports.show = exports.index = void 0;
+exports.search = exports.update = exports.remove = exports.create = exports.show = exports.index = void 0;
 const product_1 = require("../models/product");
 const utilites_1 = require("../utilites/utilites");
 function index(req, res) {
@@ -118,3 +118,16 @@ function update(req, res) {
     });
 }
 exports.update = update;
+function search(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const option = (0, utilites_1.generateProductSerchOption)(req.body);
+            const product = yield product_1.ProductModel.find(option.search, option.values);
+            return res.status(200).json({ message: 'show', product });
+        }
+        catch (error) {
+            return res.status(500).send({ message: 'error encountered', error });
+        }
+    });
+}
+exports.search = search;

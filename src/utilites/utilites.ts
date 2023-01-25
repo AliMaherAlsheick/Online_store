@@ -137,6 +137,26 @@ export function generateProductUpdataSQL(product: ProductDTO) {
     sql += coloums.join(',') + ' WHERE id=$1 RETURNING *';
     return { sql, theArray };
 }
+export function generateOrderUpdataSQL(order: OrderDTO) {
+    let sql: string = 'UPDATE orders SET ';
+    let n: number = 1;
+    const coloums: string[] = [];
+    const theArray = [];
+    const keys = [
+        'status',
+        'order_address',
+        'delivery_cost',
+        'user_id',
+    ] as unknown as (keyof OrderDTO)[];
+    for (let key of keys) {
+        if (order.hasOwnProperty(key)) {
+            coloums.push(key + '=$' + ++n);
+            theArray.push(order[key]);
+        }
+    }
+    sql += coloums.join(',') + ' WHERE id=$1 RETURNING *';
+    return { sql, theArray };
+}
 export function formateOrder(orderData: OrderDTO) {
     const today: Date = new Date();
     orderData.date =
@@ -146,8 +166,9 @@ export function formateOrder(orderData: OrderDTO) {
         today.getDate() +
         '-' +
         today.getFullYear();
-    orderData.amount = parseInt('' + orderData.amount);
+    orderData.quantity = parseInt('' + orderData.quantity);
     orderData.product_id = parseInt('' + orderData.product_id);
+
     return orderData;
 }
 export async function Verfy(authorization: string | undefined): Promise<User> {
@@ -195,4 +216,62 @@ export async function hashPassword(pass: string): Promise<string> {
     } catch (err) {
         throw err;
     }
+}
+export function generateOrderPUpdataSQL(order: OrderDTO) {
+    let sql: string = 'UPDATE order_products SET ';
+    let n: number = 1;
+    const coloums: string[] = [];
+    const theArray = [];
+    const keys = ['quantity', 'product_id'] as unknown as (keyof OrderDTO)[];
+    for (let key of keys) {
+        if (order.hasOwnProperty(key)) {
+            coloums.push(key + '=$' + ++n);
+            theArray.push(order[key]);
+        }
+    }
+    sql += coloums.join(',') + ' WHERE id=$1 RETURNING *';
+    return { sql, theArray };
+}
+export function generateProductSerchOption(order: {
+    search_value: string | number;
+    searchOptions: {
+        name: boolean;
+        price: boolean;
+        rating: boolean;
+        date_of_change: boolean;
+        category: boolean;
+    };
+}): { search: string; values: (string | number)[] } {
+    let n: number = 0;
+    let search_value: number | string[];
+    let keys: (keyof typeof order.searchOptions)[];
+    const search: string[] = [];
+    const values: (string | number)[] = [];
+    if (Number.isNaN(Number(order.search_value))) {
+        search_value = (order.search_value + '').split(' ');
+        keys = ['name', 'category'];
+        for (let key of keys) {
+            if (order.searchOptions[key]) {
+                search.push(key + '=$' + ++n);
+                values.push(search_value.join(' '));
+                if (search_value.length > 1) {
+                    for (let value of search_value) {
+                        search.push(key + '=$' + ++n);
+                        values.push(value);
+                    }
+                }
+            }
+        }
+    } else {
+        search_value = Number(order.search_value);
+        keys = ['price', 'rating'];
+        for (let key of keys) {
+            if (order.searchOptions[key]) {
+                search.push(key + '=$' + ++n);
+                values.push(search_value);
+            }
+        }
+    }
+
+    return { search: search.join(' OR '), values };
 }
