@@ -18,7 +18,7 @@ class OrdersModel {
             try {
                 const conn = yield database_1.DBConnection.connect();
                 const sql = 'SELECT orders.* ,COALESCE(SUM(order_products.quantity*products.price),0) AS products_cost ' +
-                    ',COALESCE((SUM(order_products.quantity*products.price)+orders.delivery_cost),0)AS total_cost' +
+                    ',COALESCE((CAST(SUM(order_products.quantity*products.price) as INTEGER) + orders.delivery_cost),0)AS total_cost' +
                     ' FROM( orders LEFT JOIN( order_products INNER JOIN products ON ' +
                     'order_products.product_id=products.id)' +
                     'ON orders.id=order_products.order_id ) GROUP BY orders.id ORDER BY orders.id';
@@ -38,7 +38,7 @@ class OrdersModel {
             try {
                 const conn = yield database_1.DBConnection.connect();
                 const sql = 'SELECT orders.* ,COALESCE(SUM(order_products.quantity*products.price),0) AS products_cost ' +
-                    ',COALESCE((SUM(order_products.quantity*products.price)+orders.delivery_cost),0)AS total_cost' +
+                    ',COALESCE((CAST(SUM(order_products.quantity*products.price) as INTEGER) + orders.delivery_cost),0)AS total_cost' +
                     ' FROM( orders LEFT JOIN( order_products INNER JOIN products ON ' +
                     'order_products.product_id=products.id)' +
                     'ON orders.id=order_products.order_id ) WHERE orders.id=$1 GROUP BY orders.id ORDER BY orders.id';
@@ -60,7 +60,7 @@ class OrdersModel {
             try {
                 const conn = yield database_1.DBConnection.connect();
                 const sql = 'SELECT orders.* ,COALESCE(SUM(order_products.quantity*products.price),0) AS products_cost ' +
-                    ',COALESCE((SUM(order_products.quantity*products.price)+orders.delivery_cost),0)AS total_cost' +
+                    ',COALESCE((CAST(SUM(order_products.quantity*products.price) as INTEGER) + orders.delivery_cost),0)AS total_cost' +
                     ' FROM( orders LEFT JOIN( order_products INNER JOIN products ON ' +
                     'order_products.product_id=products.id)' +
                     'ON orders.id=order_products.order_id ) WHERE orders.user_id=$1  GROUP BY orders.id ORDER BY orders.id';
@@ -182,7 +182,6 @@ class OrdersModel {
             try {
                 const conn = yield database_1.DBConnection.connect();
                 const sql = (0, utilites_1.generateOrderPUpdataSQL)(order);
-                console.log(sql.sql, [id, ...sql.theArray]);
                 const result = yield conn.query(sql.sql, [
                     id,
                     ...sql.theArray,

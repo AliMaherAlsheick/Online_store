@@ -14,11 +14,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const supertest_1 = __importDefault(require("supertest"));
 const server_1 = require("../server");
-console.log('testing');
 const AppRequest = (0, supertest_1.default)(server_1.app);
-describe('Test endpoint responses', () => {
-    it('gets the api endpoint', () => __awaiter(void 0, void 0, void 0, function* () {
+describe('Test endpoints responses', () => {
+    it('test the user api endpoint', () => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield AppRequest.get('/user');
+        expect(response.status).toBe(400);
+    }));
+    it('test the product api endpoint', () => __awaiter(void 0, void 0, void 0, function* () {
+        const response = yield AppRequest.get('/product');
         expect(response.status).toBe(200);
+    }));
+    it('test the api endpoint', () => __awaiter(void 0, void 0, void 0, function* () {
+        const response = yield AppRequest.get('/order');
+        expect(response.status).toBe(400);
     }));
 });

@@ -102,7 +102,6 @@ class UserModel {
             try {
                 const conn = yield database_1.DBConnection.connect();
                 const sql = (0, utilites_1.generateUpdataSQL)(user);
-                console.log(sql[0], [id, ...sql[1]]);
                 const result = yield conn.query(sql[0], [id, ...sql[1]]);
                 conn.release();
                 return result.rows[0];

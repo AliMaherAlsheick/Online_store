@@ -70,13 +70,15 @@ function formateNewUser(userData) {
 }
 exports.formateNewUser = formateNewUser;
 function getJWT(id) {
-    return jsonwebtoken_1.default.sign({ id }, process.env.STORE_JWT_TOKEN);
+    var _a;
+    return jsonwebtoken_1.default.sign({ id }, (_a = process.env.STORE_JWT_TOKEN) === null || _a === void 0 ? void 0 : _a.trimEnd().split("'").join(''));
 }
 exports.getJWT = getJWT;
 function passwordValidation(password, hashedPassword) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const piper = process.env.STORE_PIPER;
+            const piper = (_a = process.env.STORE_PIPER) === null || _a === void 0 ? void 0 : _a.trimEnd().split("'").join('');
             const result = yield bcrypt_1.default.compare(password + piper, hashedPassword);
             return result;
         }
@@ -185,11 +187,11 @@ function formateOrder(orderData) {
 }
 exports.formateOrder = formateOrder;
 function Verfy(authorization) {
-    var _a, _b;
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const JWT = (_a = authorization === null || authorization === void 0 ? void 0 : authorization.split(' ')[1]) !== null && _a !== void 0 ? _a : '';
-            const user = user_1.UserModel.select((_b = jsonwebtoken_1.default.verify(JWT, process.env.STORE_JWT_TOKEN)) === null || _b === void 0 ? void 0 : _b.id);
+            const user = user_1.UserModel.select((_c = jsonwebtoken_1.default.verify(JWT, (_b = process.env.STORE_JWT_TOKEN) === null || _b === void 0 ? void 0 : _b.trimEnd().split("'").join(''))) === null || _c === void 0 ? void 0 : _c.id);
             return user;
         }
         catch (err) {
@@ -218,10 +220,11 @@ function getMonthPeriod() {
 }
 exports.getMonthPeriod = getMonthPeriod;
 function hashPassword(pass) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const salt = parseInt(process.env.STORE_SALT);
-            const piper = process.env.STORE_PIPER;
+            const salt = parseInt((_a = process.env.STORE_SALT) === null || _a === void 0 ? void 0 : _a.trimEnd().split("'").join(''));
+            const piper = (_b = process.env.STORE_PIPER) === null || _b === void 0 ? void 0 : _b.trimEnd().split("'").join('');
             pass = yield bcrypt_1.default.hash(pass + piper, salt);
             return pass;
         }

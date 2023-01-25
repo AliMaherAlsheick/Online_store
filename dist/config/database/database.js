@@ -5,8 +5,8 @@ require("dotenv/config");
 const pg_1 = require("pg");
 const { PG_DEV_PORT, PG_DEV_HOST, PG_DEV_DB, PG_DEV_USER, PG_DEV_PASSWORD, PG_TEST_PORT, PG_TEST_HOST, PG_TEST_DB, PG_TEST_USER, PG_TEST_PASSWORD, } = process.env;
 function setConfig() {
-    console.log(process.env.ENVIRONMENT);
-    if (process.env.ENVIRONMENT === 'test')
+    var _a;
+    if (((_a = process.env.ENVIRONMENT) === null || _a === void 0 ? void 0 : _a.trimEnd().split("'").join('')) === 'test')
         return {
             host: PG_TEST_HOST,
             port: parseInt(PG_TEST_PORT),
