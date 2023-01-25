@@ -10,11 +10,11 @@ const config = {
     optionsSuccessStatus: 200,
 };
 const port: string = (
-    process.env.ENVIRONMENT === 'development'
-        ? process.env.STORE_DEV_PORT
-        : process.env.ENVIRONMENT === 'test'
-        ? process.env.STORE_TEST_PORT
-        : process.env.STORE_PRO_PORT
+    process.env.ENVIRONMENT?.trimEnd().split("'").join('') === 'development'
+        ? process.env.STORE_DEV_PORT?.trimEnd().split("'").join('')
+        : process.env.ENVIRONMENT?.trimEnd().split("'").join('') === 'test'
+        ? process.env.STORE_TEST_PORT?.trimEnd().split("'").join('')
+        : process.env.STORE_PRO_PORT?.trimEnd().split("'").join('')
 ) as string;
 const address: string = 'http://localhost:' + port;
 app.use(cors(config));
