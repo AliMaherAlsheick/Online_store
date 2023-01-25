@@ -14,8 +14,7 @@ const {
     PG_TEST_PASSWORD,
 } = process.env;
 function setConfig(): PoolConfig {
-    console.log(process.env.ENVIRONMENT);
-    if (process.env.ENVIRONMENT === 'test')
+    if (process.env.ENVIRONMENT?.trimEnd().split("'").join('') === 'test')
         return {
             host: PG_TEST_HOST as string,
             port: parseInt(PG_TEST_PORT as string),
@@ -31,5 +30,4 @@ function setConfig(): PoolConfig {
         password: PG_DEV_PASSWORD as string,
     };
 }
-
 const DBConnection = new Pool(setConfig());
