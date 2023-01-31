@@ -16,16 +16,16 @@ const {
 function setConfig(): PoolConfig {
     if (process.env.ENVIRONMENT?.trimEnd().split("'").join('') === 'test')
         return {
-            host: PG_TEST_HOST as string,
-            port: parseInt(PG_TEST_PORT as string),
-            database: PG_TEST_DB as string,
+            host: (PG_TEST_HOST as string) ?? '127.0.0.1',
+            port: parseInt(PG_TEST_PORT as string) ?? 5432,
+            database: (PG_TEST_DB as string) ?? 'shopping',
             user: PG_TEST_USER as string,
             password: PG_TEST_PASSWORD as string,
         };
     return {
-        host: PG_DEV_HOST as string,
-        port: parseInt(PG_DEV_PORT as string),
-        database: PG_DEV_DB as string,
+        host: (PG_DEV_HOST as string) ?? '127.0.0.1',
+        port: parseInt(PG_DEV_PORT as string) ?? 5432,
+        database: (PG_DEV_DB as string) ?? 'shopping_test',
         user: PG_DEV_USER as string,
         password: PG_DEV_PASSWORD as string,
     };

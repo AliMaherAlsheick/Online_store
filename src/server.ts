@@ -16,7 +16,7 @@ const port: string = (
         ? process.env.STORE_TEST_PORT?.trimEnd().split("'").join('')
         : process.env.STORE_PRO_PORT?.trimEnd().split("'").join('')
 ) as string;
-const address: string = 'http://localhost:' + port;
+const address: string = 'http://localhost:' + port ?? 3000;
 app.use(cors(config));
 app.use(bodyParser.json());
 app.use(appRoutes);
