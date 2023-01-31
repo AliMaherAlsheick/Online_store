@@ -23,7 +23,6 @@ async function index(req: Request, res: Response): Promise<void> {
 async function show(req: Request, res: Response): Promise<Response> {
     try {
         const caller = await Verfy(req.headers.authorization);
-        console.log(caller);
         const user: User = await UserModel.select(parseInt(req.params.id));
         user.user_password = '********';
         let result: { result: unknown; msg: string };
